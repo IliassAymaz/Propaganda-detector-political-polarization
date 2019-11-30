@@ -14,6 +14,7 @@ from gensim import corpora, models
 import gensim
 import os
 
+
 def preprocess(articles):
     """The preprocessing stage.
      Articles are tokenized, stripped of stop words
@@ -21,7 +22,7 @@ def preprocess(articles):
      """
     stemmed_articles = []
     for article in articles:
-        # Tokenization 
+        # Tokenization
         # tokenizer = RegexpTokenizer(r'[^\s\:\#\-\,\;\!\"\_\?\!\.\”\’\“\—]+')
         tokenizer = RegexpTokenizer(r'(?<![\w\'\’])\w+?(?=\b|n\'t)')
         # print(tokenizer)
@@ -55,7 +56,6 @@ def preprocess(articles):
     # print('Into a bag of words', bg_words)
     return bg_words, dictionary
 
-
 def lda(bg_words, dictionary, num_topics, num_words):
     """
     Generates the LDA model.
@@ -74,16 +74,20 @@ def lda(bg_words, dictionary, num_topics, num_words):
     # print(lda_model.print_topics(num_topics=num_topics, num_words=num_words))
 
 
+def main():
+
+    rootdir = '../data/datasets/train-articles/'
+
+    # Get articles from the dataset
+    articles = []
+    for subdir, dirs, files in os.walk(rootdir):
+        for file in files:
+            with open(os.path.join(subdir, file), 'r') as article:
+                articles.append(article.read())
+
+    bag_words, dict_ = preprocess(articles)
+    lda(bag_words, dict_, 14, 7)
 
 
-rootdir = '../data/datasets/train-articles/'
-
-# Get articles from the dataset
-articles = []
-for subdir, dirs, files in os.walk(rootdir):
-    for file in files:
-        with open(os.path.join(subdir, file), 'r') as article:
-            articles.append(article.read())
-
-bag_words, dict_ = preprocess(articles)
-lda(bag_words, dict_, 14, 7)
+if __name__ == '__main__':
+    main()
