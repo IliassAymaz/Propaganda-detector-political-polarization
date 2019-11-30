@@ -18,14 +18,25 @@ for filename in file_list:
         articles_id.append(os.path.basename(filename).split(".")[0][7:])
 articles = dict(zip(articles_id, articles_content))
 data = pd.read_csv("../data/datasets/train-task1-SI.labels", header=None, sep='\t')
-data['sentence_length'] = ''
+data['sequence_size'] = ''
 data['qm_size'] = ''
 data['em_size'] = ''
-print(data)
+data['ner_person'] = ''
+data['ner_organization'] = ''
+data['ner_country'] = ''
 for index, row in data.iterrows():
     article = articles.get(str(row[0]))
     propaganda = article[row[1]:row[2]]
-    lex = LexicalAnnotator.annotate(propaganda)[]
-    data.set_value(index, 'sentence_length', LexicalAnnotator.annotate(propaganda)[0])
-print(data)
 
+    #LEXICAL ANNOTATION
+    lexical = LexicalAnnotator.annotate(propaganda)
+    data.at[index, 'sequence_size'] = "%.2f" % lexical[0]
+    data.at[index, 'em_size'] =  lexical[1]
+    data.at[index, 'qm_size'] = lexical[2]
+    continue
+    #NER ANNOTATION
+    sa = StanfordAnnotator('http://localhost', 9000)
+    ner = sa.annotate_ner(propaganda)
+    data.at[index, 'ner_person'] = ner[0]
+
+data.to_csv('annotated.csv',index=False)
