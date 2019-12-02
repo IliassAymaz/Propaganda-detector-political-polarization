@@ -18,7 +18,7 @@ x_t=np.array(x_t).reshape((1,1,100));
 y_t=[i for i in range(101,201)]
 y_t=np.array(y_t).reshape(1,1,100)
 
-#RNN modle with LSTM..
+#RNN modle with LSTM..  
 mod = Sequential()  
 mod.add(LSTM(100, input_shape=(1, 100),return_sequences=True))
 mod.add(Dense(100))
