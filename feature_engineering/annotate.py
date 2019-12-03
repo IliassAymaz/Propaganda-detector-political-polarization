@@ -26,6 +26,7 @@ data['em_size'] = ''
 data['ner_person'] = ''
 data['ner_organization'] = ''
 data['ner_country'] = ''
+data['sentiment'] = ''
 
 start_time = time.time()
 sa = StanfordAnnotator('http://localhost', 9000)
@@ -45,6 +46,10 @@ for index, row in data.iterrows():
     data.at[index, 'ner_person'] = ', '.join(ner[0])
     data.at[index, 'ner_organization'] = ', '.join(ner[1])
     data.at[index, 'ner_country'] = ', '.join(ner[2])
+
+    #SENTIMENT ANNOTATION
+    sentiment = sa.annotate_sentiment(propaganda)
+    data.at[index, 'sentiment'] = "%.2f" % sentiment
 
     ProgressBar.printProgressBar(index, total)
 

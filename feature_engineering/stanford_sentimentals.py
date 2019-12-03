@@ -18,6 +18,9 @@ class StanfordAnnotator:
         for sentence in root.iter('sentence'):
             counter += 1
             total_sentiment += float(sentence.attrib.get('sentimentValue'))
+        if counter == 0:
+            # Because 2 corresponds to neutral setimental value
+            return 2
         return total_sentiment/counter
 
     #We are only annotating PERSON, ORGANIZATION and COUNTRY here
