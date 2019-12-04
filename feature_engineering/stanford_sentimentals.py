@@ -28,16 +28,16 @@ class StanfordAnnotator:
         props={'annotators': 'ner','pipelineLanguage':'en','outputFormat':'json'}
         result = self.nlp.annotate(text, properties=props)
         ner = json.loads(result)
-        persons = []
-        organizations = []
-        countries = []
+        persons = set()
+        organizations = set()
+        countries = set()
         for sentence in ner['sentences']:
             for entity in sentence['entitymentions']:
                 tag = entity['ner']
                 if tag == 'PERSON':
-                    persons.append(entity['text'])
+                    persons.add(entity['text'])
                 elif tag == 'COUNTRY':
-                    countries.append(entity['text'])
+                    countries.add(entity['text'])
                 elif tag == 'ORGANIZATION':
-                    organizations.append(entity['text'])
+                    organizations.add(entity['text'])
         return persons, organizations, countries
