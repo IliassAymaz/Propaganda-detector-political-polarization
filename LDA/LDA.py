@@ -83,10 +83,11 @@ def identify_docs_by_topic(lda_model, bg_words, article_names):
     if input('Show documents by topic? [y/n]') == 'y':
         for i in range(len(bg_words)):
             for j in range(len(lda_model[bg_words[i]])):
-                # put that as dataframe afterwards
+                # output that to
                 print('Document article%s.txt has a probability of %f%% to be in the topic %d' %
                       (article_names[i], lda_model[bg_words[i]][j][1]*100,
                        lda_model[bg_words[i]][j][0]))
+
     else:
         pass
 
