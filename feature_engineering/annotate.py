@@ -1,6 +1,7 @@
-from stanford_sentimentals import StanfordAnnotator
-from progress_bar import ProgressBar
-from lexical_features import LexicalAnnotator
+from annotators.stanford_annotator import StanfordAnnotator
+from annotators.lexical_annotator import LexicalAnnotator
+from annotators.polarity_annotator import PolarityAnnotator
+from util.progress_bar import ProgressBar
 import glob
 import os.path
 import pandas as pd
@@ -26,6 +27,7 @@ data['em_size'] = ''
 data['ner_person'] = ''
 data['ner_organization'] = ''
 data['ner_country'] = ''
+data['sentiment'] = ''
 
 start_time = time.time()
 sa = StanfordAnnotator('http://localhost', 9000)
@@ -45,6 +47,13 @@ for index, row in data.iterrows():
     data.at[index, 'ner_person'] = ', '.join(ner[0])
     data.at[index, 'ner_organization'] = ', '.join(ner[1])
     data.at[index, 'ner_country'] = ', '.join(ner[2])
+
+    #SENTIMENT ANNOTATION
+    sentiment = sa.annotate_sentiment(propaganda)
+    data.at[index, 'sentiment'] = "%.2f" % sentiment
+
+    #POLARITY ANNOTATION
+    PolarityAnnotator.annotate(propaganda)
 
     ProgressBar.printProgressBar(index, total)
 
