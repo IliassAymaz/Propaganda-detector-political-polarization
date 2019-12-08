@@ -84,10 +84,8 @@ def identify_docs_by_topic(lda_model, bg_words, article_names):
 def store_results(df, lda_model, bg_words, article_names, num_topics, num_words):
     """
     Make the output of LDA ready to be appended
-    to annotated.csv
+    to annotated.csv and append it.
     """
-
-    # stores
     data = []
     for i in range(len(bg_words)):
         # get the keywords (topics) from the LDA result
@@ -101,8 +99,7 @@ def store_results(df, lda_model, bg_words, article_names, num_topics, num_words)
         df = df.astype('object')
         for item in range(len(df)):
             if df.at[item, '0'] == int(article_names[i]):
-                df.at[item, 'keywords'] = list(keywords[:, 0])
-    # print(df)
+                df.at[item, 'keywords'] = ' - '.join(list(keywords[:, 0]))
 
     # output the resulted LDA keywords to annotated.csv
     df.to_csv('annotated_postLDA.csv', sep=',')
@@ -137,7 +134,7 @@ def main():
     annotated_data = pd.read_csv('../feature_engineering/annotated.csv')
     annotated_data['keywords'] = [nan for nan in range(len(annotated_data))]
 
-    # prepare data to be annotated
+    # prepare data to be added to csv and append it
     store_results(annotated_data, lda_model, bag_words, article_names, num_topics, num_keywords)
 
 
