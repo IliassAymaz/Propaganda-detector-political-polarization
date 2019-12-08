@@ -14,6 +14,8 @@ from gensim import corpora, models
 import gensim
 import os
 import re
+import pandas as pd
+import numpy as np
 
 
 def preprocess(articles):
@@ -24,37 +26,27 @@ def preprocess(articles):
     stemmed_articles = []
     for article in articles:
         # Tokenization
-        # tokenizer = RegexpTokenizer(r'[^\s\:\#\-\,\;\!\"\_\?\!\.\”\’\“\—]+')
         tokenizer = RegexpTokenizer(r'(?<![\w\'\’])\w+?(?=\b|n\'t)')
-        # print(tokenizer)
 
         result = tokenizer.tokenize(article.lower())
 
-        # print(result)
         # Get the English words
         stop_words = get_stop_words('en')
 
         # Filter them out from the document
         filterd_doc = [item for item in result if not item in stop_words]
 
-        # print('After removing stop words: \n', filterd_doc)
-
         # Stemming
         p_stemmer = PorterStemmer()
         stemmed_article = [p_stemmer.stem(word) for word in filterd_doc]
-
-        # print('After stemming: \n', stemmed_article)
 
         stemmed_articles.append(stemmed_article)
 
         # Document-term matrix
     dictionary = corpora.Dictionary(stemmed_articles)
-    # print(dictionary)
 
     # into bag of words
     bg_words = [dictionary.doc2bow(word) for word in stemmed_articles]
-
-    # print('Into a bag of words', bg_words)
     return bg_words, dictionary
 
 
@@ -65,15 +57,15 @@ def lda(bg_words, dictionary, num_topics, num_words, rootdir):
     from the preprocessing stage.
     """
     start = time.time()
-    lda_model = gensim.models.ldamodel.LdaModel(bg_words, num_topics=num_topics, id2word=dictionary, passes=20)
+    lda_model = gensim.models.ldamulticore.LdaMulticore(bg_words, num_topics=num_topics, id2word=dictionary, passes=20)
     print('LDA Analysis result for %d topics and %d words :' % (num_topics, num_words))
-    for item in lda_model.print_topics(num_topics=num_topics, num_words=num_words):
+    # for item in lda_model.print_topics():  # num_topics=num_topics, num_words=num_words):
+    for item in lda_model.show_topics(num_topics=num_topics, num_words=num_words, formatted=False):
         print(item)
     end = time.time()
     for subdir, dirs, files in os.walk(rootdir):
         n = len(files)
     print('Executed in ' + str(round(end-start, 2)) + ' seconds on ', len([iq for iq in os.scandir(rootdir)]), 'files')
-    # print(lda_model.print_topics(num_topics=num_topics, num_words=num_words))
     return lda_model, bg_words
 
 
@@ -88,14 +80,42 @@ def identify_docs_by_topic(lda_model, bg_words, article_names):
                       (article_names[i], lda_model[bg_words[i]][j][1]*100,
                        lda_model[bg_words[i]][j][0]))
 
-    else:
-        pass
+
+def store_results(df, lda_model, bg_words, article_names, num_topics, num_words):
+    """
+    Make the output of LDA ready to be appended
+    to annotated.csv
+    """
+
+    # stores
+    data = []
+    for i in range(len(bg_words)):
+        # get the keywords (topics) from the LDA result
+        keywords = lda_model.show_topics(num_topics=num_topics, num_words=num_words, formatted=False)[
+            max(lda_model[bg_words[i]], key=lambda x: x[1])[0]
+        ][
+            1
+        ]
+        keywords = np.array(keywords)
+        # To allow to store a list in the dataframe
+        df = df.astype('object')
+        for item in range(len(df)):
+            if df.at[item, '0'] == int(article_names[i]):
+                df.at[item, 'keywords'] = list(keywords[:, 0])
+    # print(df)
+
+    # output the resulted LDA keywords to annotated.csv
+    df.to_csv('annotated_postLDA.csv', sep=',')
+
+    return data
 
 
 def main():
 
     rootdir = '../data/datasets/train-articles/'
 
+    num_topics = 10
+    num_keywords = 5
     # Get articles from the dataset
     articles = []
     # list to store article names
@@ -108,10 +128,17 @@ def main():
                 articles.append(article.read())
 
     bag_words, dict_ = preprocess(articles)
-    lda_model, bag_words = lda(bag_words, dict_, 10, 5, rootdir)
+    lda_model, bag_words = lda(bag_words, dict_, num_topics, num_keywords, rootdir)
 
     # Get documents by topic
     identify_docs_by_topic(lda_model, bag_words, article_names)
+
+    # read data
+    annotated_data = pd.read_csv('../feature_engineering/annotated.csv')
+    annotated_data['keywords'] = [nan for nan in range(len(annotated_data))]
+
+    # prepare data to be annotated
+    store_results(annotated_data, lda_model, bag_words, article_names, num_topics, num_keywords)
 
 
 if __name__ == '__main__':
