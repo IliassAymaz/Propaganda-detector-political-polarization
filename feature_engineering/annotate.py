@@ -1,17 +1,13 @@
 from annotators.stanford_annotator import StanfordAnnotator
 from annotators.lexical_annotator import LexicalAnnotator
 from annotators.polarity_annotator import PolarityAnnotator
-from util.progress_bar import ProgressBar
+from annotators.ibm.ibm_annotator import IBMAnnotator
 import glob
 import os.path
 import pandas as pd
 import time
 
 train_folder = "../data/datasets/train-articles"
-
-def annotate(text):
-    s_length, exms, qms = LexicalAnnotator.annotate(text)
-    sa = StanfordAnnotator('http://localhost', 9000)
 
 file_list = glob.glob(os.path.join(train_folder, "*.txt"))
 articles_content, articles_id = ([], [])
@@ -28,9 +24,16 @@ data['ner_person'] = ''
 data['ner_organization'] = ''
 data['ner_country'] = ''
 data['sentiment'] = ''
+data['polarity'] = ''
+data['sadness'] = ''
+data['joy'] = ''
+data['fear'] = ''
+data['disgust'] = ''
+data['anger'] = ''
 
 start_time = time.time()
 sa = StanfordAnnotator('http://localhost', 9000)
+ibm = IBMAnnotator(0,0)
 total = data.shape[0]
 for index, row in data.iterrows():
     article = articles.get(str(row[0]))
@@ -52,10 +55,16 @@ for index, row in data.iterrows():
     sentiment = sa.annotate_sentiment(propaganda)
     data.at[index, 'sentiment'] = "%.2f" % sentiment
 
-    #POLARITY ANNOTATION
-    PolarityAnnotator.annotate(propaganda)
+    #IBM ANNOTATION
+    emotions = ibm.annotateEmotions(propaganda)
+    data.at[index, 'sadness'] = emotions['sadness']
+    data.at[index, 'joy'] = emotions['joy']
+    data.at[index, 'fear'] = emotions['fear']
+    data.at[index, 'disgust'] = emotions['disgust']
+    data.at[index, 'anger'] = emotions['anger']
 
-    ProgressBar.printProgressBar(index, total)
+    #PROGRESS
+    print("\r--%.2f%%--" % (100*(index/float(total))), end="\r")
 
 print("\n DONE! : " +str(time.time()-start_time))
 data.to_csv('annotated.csv',index=False)
