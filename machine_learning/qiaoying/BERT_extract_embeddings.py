@@ -6,103 +6,67 @@ from transformers import BertTokenizer, BertForTokenClassification
 import pandas as pd
 import numpy as np
 
-train_table = pd.read_csv("train_table_.csv")
-train_table['loss'] = ''
+print(torch.__version__)
+train_table = pd.read_csv("train_table.csv")
 train_table['hidden_states'] = ''
+train_table['loss'] = ''
 
 #define the tokenizer & the model
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', output_hidden_states=True)
 model.eval()
+#print(model.config)
 
-sentence_embeddings = []
+sentence_embeddings = {}
 for index, row in train_table.iterrows():
+    print(index)
     #sentence_tokens
-    train_sentence = row[0]
+    train_sentence = row[1]
     train_tokens = tokenizer.tokenize(train_sentence)
     train_tokens_ids = tokenizer.convert_tokens_to_ids(train_tokens)
     train_tokens_ids_tensor = torch.tensor([train_tokens_ids])
     
     #label_tokens
-    if pd.isnull(row[1]):
+    spans = row[2]
+    begin_offset = -1
+    end_offset = -1
+    if pd.isnull(spans):
         train_labels = [0 for i in range(len(train_tokens_ids))]
         train_labels_tensor = torch.tensor([train_labels])
     else:
-        spans = row[1]
         spans_tokens = tokenizer.tokenize(spans)
+#        print(repr(train_sentence))
+#        print(repr(spans))
         spans_tokens_ids = tokenizer.convert_tokens_to_ids(spans_tokens)
         begin_offset = train_tokens_ids.index(spans_tokens_ids[0])
         end_offset = train_tokens_ids.index(spans_tokens_ids[-1]) + 1
         
         train_labels = [1 if i < end_offset and i >= begin_offset else 0 for i in range(len(train_tokens_ids))]
         train_labels_tensor = torch.tensor([train_labels])
-        
-    #pre-train the model
+    
+    #use the pre-trained model to get token embeddings
     with torch.no_grad():
         outputs = model(train_tokens_ids_tensor, labels=train_labels_tensor)
         loss, scores, hidden_states = outputs[:3]
-        train_table.iloc[index, 2] = loss.item()
-        train_table.iloc[index, 3] = hidden_states[0]
-    
-
-train_table.to_csv("train_table_embeddings.csv", index = False, encoding = "utf-8")
-
-
-#    token_embeddings = []
-#    print(hidden_states[0][0])
-#    for token in range(len(train_tokens)):
-#        hidden_layers = (hidden_states[0][0][token])
-#        token_embeddings.append(hidden_layers)
-#    
-#    print(len(token_embeddings))
-#    #all_layers = [torch.sum(torch.stack(layer)[:], 0) for layer in token_embeddings]
-#    
-#    sentence_embeddings.append(token_embeddings)
-
-
-##define the tokenizer & the model
-#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-#model = BertForTokenClassification.from_pretrained('bert-base-uncased', output_hidden_states=True)
-#model.eval()
-#
-##train: tokens
-#train_sentence = "Manchin says Democrats acted like babies at the SOTU (video) Personal Liberty Poll Exercise your right to vote."
-#train_tokens = tokenizer.tokenize(train_sentence)
-#train_tokens_ids = tokenizer.convert_tokens_to_ids(train_tokens)
-#train_tokens_ids_tensor = torch.tensor([train_tokens_ids])
-#
-##train: labels
-#begin_offset = 34
-#end_offset = 40
-#tagged_fragments = train_sentence[begin_offset:end_offset]
-#tagged_fragments_tokens = tokenizer.tokenize(tagged_fragments)
-#tagged_fragments_tokens_ids = tokenizer.convert_tokens_to_ids(tagged_fragments_tokens)
-#begin_offset_token = train_tokens_ids.index(tagged_fragments_tokens_ids[0])
-#end_offset_token = train_tokens_ids.index(tagged_fragments_tokens_ids[-1]) + 1
-#
-#train_labels = [1 if i < end_offset_token and i >= begin_offset_token else 0 for i in range(len(train_tokens_ids))]
-#train_labels_tensor = torch.tensor([train_labels])
-#
-##pre-train the model
-#outputs = model(train_tokens_ids_tensor, labels=train_labels_tensor)
-#loss, scores, hidden_states = outputs[:3]
-#print(loss.data)
+        
+        #hidden_states[layer][0][token][units]
+        token_embeddings = []
+        for token in range(len(train_tokens)):
+            hidden_layers = []
+            for layer in range(len(hidden_states)):
+                hidden_layers.append(hidden_states[layer][0][token])
+            token_embeddings.append(hidden_layers)
+        
+        #token_embeddings[token][layer][units]
+        token_embeddings_all_layers = []
+        for token in token_embeddings:
+            token_embeddings_all_layers.append(torch.sum(torch.stack(token), dim=0))
+        
+        #propagandistic span embeddings
+        if begin_offset != -1:
+            sentence_embeddings[train_sentence] = (spans, row[3], row[4], token_embeddings_all_layers[begin_offset:end_offset])
 
 
-#
-#test_sentence = "In a glaring sign of just how stupid and petty things have become in Washington these days."
-#
-#test_tokens = tokenizer.tokenize(test_sentence)
-#test_tokens_ids = tokenizer.convert_tokens_to_ids(test_tokens)
-#test_tokens_ids_tensor = torch.tensor([test_tokens_ids])
-#
-#with torch.no_grad():
-#    logits = model(test_tokens_ids_tensor)
-#
-#logits = logits.detach().cpu().numpy()
-#
-#predictions = []
-#predictions.extend([list(p) for p in numpy.argmax(logits, axis=2)])
-#
-#print(predictions)
-
+print("Writing to csv file...")
+pd.DataFrame.from_dict(data=sentence_embeddings, orient='index').to_csv('train_table_embeddings.csv', header=False, encoding = "utf-8")
+print("Done.")
