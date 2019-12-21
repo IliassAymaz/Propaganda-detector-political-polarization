@@ -1,13 +1,29 @@
 # Transform the training corpus to a bag of words
-# Remove the stop words first? --no, for acccuracy
+# Output: vector of 19141 unique words to 
+# evalue future tokens/sentences with.
+
+# Use document_to_vector(token, uniques) to get the BoW
+# representation of a 'token' that lies 
+# on a 'uniques' list.
 
 
 import re
 import os
+import spacy
+
 
 rootdir = '../data/datasets/train-articles/'
+nlp = spacy.load('en_core_web_sm')
 
-# tokenize
+
+def get_articles(root_dir):
+    corpus = []
+    for subdir, dirs, files in os.walk(root_dir):
+        for f in files:
+            corpus.append(open(subdir+f, 'r').read())
+    return corpus
+
+
 def build_bow(corpus):
     """
     takes the corpus (all documents as str) and 
@@ -24,15 +40,42 @@ def build_bow(corpus):
 
     return unique_words
 
-def document_to_vector(document, uniques):
+
+# lemmatize
+def lemmatize_uniques(joint_uniques):
     """
-    Converts a document to a bow vector 
+    lemmatizes the uniques for a more 
+    accurate bow representation.
+    """
+    lemmas = []
+    doc = nlp(joint_uniques)
+    for token in doc:
+        lemmas.append(token.lemma_)
+    print(lemmas)
+    return lemmas
+
+
+def lemmatize_document(document):
+    """
+    Gets a documents and returns a 
+    document with lematized tokens.
+    """
+    lemmas = []
+    doc = nlp(document)
+    for token in doc:
+        lemmas.append(token.lemma_)
+    return ' '.join(lemmas)
+
+
+def document_to_vector(lemmatized_document, uniques):
+    """
+    Converts a lemmatized document to a bow vector 
     representation.
     1/0 for word exists/doesn't exist
     """
     print(uniques)
     # tokenize
-    words = re.findall(r'\w+', document.lower())
+    words = re.findall(r'\w+', lemmatized_document.lower())
 
     # vector = {} 
     vector = [0]*len(uniques)
@@ -48,18 +91,39 @@ def document_to_vector(document, uniques):
 
     return vector
 
-def get_articles(root_dir):
-    for subdir, dirs, files in os.walk(root_dir):
 
 
-docs = [
-    'i love machine learning',
-    'machine learning is great',
-    'we can programm on any machine'
-]
+# Transform our corpus of documents into a bag of words per document
+# The output is a uniques vector: lemmatized_uniques
+
+
+docs = get_articles(rootdir)
 
 corpus = ' '.join(docs)
 
+
 uniques = build_bow(corpus)
-vector = document_to_vector('i have a great machine.', uniques)
-print(vector)
+lemmatized_uniques = lemmatize_uniques(' '.join(uniques))
+
+
+def save_to_file(filename, _list):
+    with open(filename, 'w+') as f_:
+        for item in _list:
+            f_.write(str(item)+'\n')
+
+# save uniques to a file
+save_to_file('lemmatized_uniques.txt', lemmatized_uniques)
+
+
+lemmatized_documents = []
+for doc in docs:
+    lemmatized_documents.append(lemmatize_document(doc))
+
+document_vectors = []
+for i in range(len(lemmatized_documents)):
+    document_vectors.append(document_to_vector(lemmatized_documents[i], lemmatized_uniques))
+
+
+
+
+
