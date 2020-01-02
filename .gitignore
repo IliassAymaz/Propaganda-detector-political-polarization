@@ -1,6 +1,10 @@
 #BERT
 machine_learning/qiaoying/run_squad/uncased_L-12_H-768_A-12
 
+#IDEs
+*.vscode/
+*.idea/
+
 # General
 .DS_Store
 .AppleDouble
