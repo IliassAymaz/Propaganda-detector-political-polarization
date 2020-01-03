@@ -54,7 +54,8 @@ for index, row in data.iterrows():
     #SENTIMENT ANNOTATION
     sentiment = sa.annotate_sentiment(propaganda)
     data.at[index, 'sentiment'] = "%.2f" % sentiment
-
+    
+    '''
     #IBM ANNOTATION
     emotions = ibm.annotateEmotions(propaganda)
     data.at[index, 'sadness'] = emotions['sadness']
@@ -62,6 +63,7 @@ for index, row in data.iterrows():
     data.at[index, 'fear'] = emotions['fear']
     data.at[index, 'disgust'] = emotions['disgust']
     data.at[index, 'anger'] = emotions['anger']
+    '''
 
     #PROGRESS
     print("\r--%.2f%%--" % (100*(index/float(total))), end="\r")
