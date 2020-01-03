@@ -1,4 +1,7 @@
+import sys
+sys.path.insert(1, "../BoW")
 from BoW import get_articles, rootdir
+
 text = '\n'.join(get_articles(rootdir))
 
 # find the number of words of the longest sentence.
