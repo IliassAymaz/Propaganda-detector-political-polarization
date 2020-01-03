@@ -15,9 +15,10 @@ train_table['loss'] = ''
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', output_hidden_states=True)
 model.eval()
-#print(model.config)
+print(model.config)
 
 sentence_embeddings = {}
+non_propaganda_table = {}
 for index, row in train_table.iterrows():
     print(index)
     #sentence_tokens
@@ -65,8 +66,14 @@ for index, row in train_table.iterrows():
         #propagandistic span embeddings
         if begin_offset != -1:
             sentence_embeddings[train_sentence] = (spans, row[3], row[4], token_embeddings_all_layers[begin_offset:end_offset])
+        #non-propagandistic span embeddings
+        else:
+            sentence_embeddings[train_sentence] = token_embeddings_all_layers[:]
+            non_propaganda_table[train_sentence] = -1
 
 
 print("Writing to csv file...")
-pd.DataFrame.from_dict(data=sentence_embeddings, orient='index').to_csv('train_table_embeddings.csv', header=False, encoding = "utf-8")
+#pd.DataFrame.from_dict(data=sentence_embeddings, orient='index').to_csv('train_table_embeddings.csv', header=False, encoding = "utf-8")
+torch.save(sentence_embeddings, "span_embeddings.pt")
+pd.DataFrame.from_dict(data=non_propaganda_table, orient='index').to_csv('non_propaganda_table.csv', header=False, encoding = "utf-8")
 print("Done.")
