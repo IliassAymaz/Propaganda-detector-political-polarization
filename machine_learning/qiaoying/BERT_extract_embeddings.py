@@ -73,7 +73,7 @@ for index, row in train_table.iterrows():
 
 
 print("Writing to csv file...")
-#pd.DataFrame.from_dict(data=sentence_embeddings, orient='index').to_csv('train_table_embeddings.csv', header=False, encoding = "utf-8")
-torch.save(sentence_embeddings, "span_embeddings.pt")
+pd.DataFrame.from_dict(data=sentence_embeddings, orient='index').to_csv('train_table_embeddings.csv', header=False, encoding = "utf-8")
+#torch.save(sentence_embeddings, "span_embeddings.pt")
 pd.DataFrame.from_dict(data=non_propaganda_table, orient='index').to_csv('non_propaganda_table.csv', header=False, encoding = "utf-8")
 print("Done.")
