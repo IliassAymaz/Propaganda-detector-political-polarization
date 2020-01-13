@@ -5,8 +5,8 @@ import torch
 from transformers import BertTokenizer, BertForTokenClassification
 import pandas as pd
 import numpy as np
-
-def convert_into_bert_tokens(model, tokenizer, sentence, span):
+    
+def get_bert_embedding(model, tokenizer, sentence, span):
     #convert sentence into tokens
     sentence_tokens = tokenizer.tokenize(sentence)
     sentence_tokens_ids = tokenizer.convert_tokens_to_ids(sentence_tokens)
@@ -28,13 +28,10 @@ def convert_into_bert_tokens(model, tokenizer, sentence, span):
         
         labels = [1 if i < end_offset and i >= begin_offset else 0 for i in range(len(sentence_tokens_ids))]
         labels_tensor = torch.tensor([labels])
-        
-    return sentence_tokens_ids_tensor, labels_tensor, begin_offset, end_offset
     
-def get_bert_embedding(model, sentence_tokens, labels_tensor, begin_offset, end_offset):
     #use the pre-trained model to get sentence embeddings
     with torch.no_grad():
-        outputs = model(sentence_tokens, labels=labels_tensor)
+        outputs = model(sentence_tokens_ids_tensor, labels=labels_tensor)
         loss, scores, hidden_states = outputs[:3]
         
         #hidden_states[layer][0][token][units], 768 units for each token
@@ -73,17 +70,17 @@ def main():
         #get sentence_tokens && label_tokens
         sentence = row[1]
         span = row[2]
-        sentence_tokens, label_tokens, begin_offset, end_offset = convert_into_bert_tokens(model, tokenizer, sentence, span)
         
         #get bert embeddings
-        span_embeddings = get_bert_embedding(model, sentence_tokens, label_tokens, begin_offset, end_offset)
-
-        #propagandistic span embeddings
-        if begin_offset != -1:
-            data_embeddings[sentence] = (span, row[3], row[4], span_embeddings)
+        span_embeddings = get_bert_embedding(model, tokenizer, sentence, span)
+        
         #non-propagandistic span embeddings
-        else:
+        if pd.isnull(span):
             data_embeddings[sentence] = span_embeddings
+        #propagandistic span embeddings
+        else:
+            data_embeddings[sentence] = (span, row[3], row[4], span_embeddings)
+
         
     print("Writing to output file...")
     torch.save(data_embeddings, "data_embeddings.pt")
