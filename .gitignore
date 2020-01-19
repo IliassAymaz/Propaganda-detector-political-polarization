@@ -3,6 +3,7 @@ machine_learning/qiaoying/run_squad/uncased_L-12_H-768_A-12
 
 #IDEs
 */.vscode/
+*\.vscode\
 
 # Trained LSM
 machine_learning/lstm_128_bow.h5
