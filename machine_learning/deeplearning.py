@@ -8,6 +8,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
 from keras.models import Sequential, Model
 from keras.layers import concatenate, Embedding, Dense, LSTM, Bidirectional, Input
+
 df = pd.read_csv('test.csv')
 print(df.columns)
 df = df.drop(columns=['Unnamed: 0','ner_country','ner_organization','ner_person','id','span'])
@@ -18,6 +19,7 @@ print(df.columns)
 features = df[properties].values.tolist()
 X = []
 c = 0
+
 for i in df['bow_sequence']:
     if c%1000== 0:
         print(c)
@@ -72,5 +74,4 @@ model.fit_generator(generator(X_train,features_train,y_train,100),steps_per_epoc
 
 test_loss, test_acc = model.evaluate_generator(generator(X_test, features_test,y_test,100), steps = len(X_test)/100)
 print('Test accuracy:', test_acc)
-print('Test loss:', test_loss)
-model.save('lstm_128_bow.h5')
+print('Test loss:', test_lossmodel.save('lstm_128_bow.h5')
