@@ -3,8 +3,6 @@
 
 Based on the Task SI (Span Identification) of the [Semeval2020 Task 11](https://propaganda.qcri.org/semeval2020-task11/index.html), this work contains the software implementation of the machine learning based propaganda detector prototype, as authored by the team *stayfoolish*.
 
-The implementation has achieved an accuracy of xx%.
-
 
 - [The task](#the-task)
 - [Approach](#approach)
