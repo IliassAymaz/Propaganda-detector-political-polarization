@@ -95,7 +95,7 @@ stop_words == 2018.7.23
 # machine_learning/qiaoying/run_squad/run_squad.py: 30
 # machine_learning/qiaoying/run_squad/tokenization.py: 25
 # machine_learning/qiaoying/run_squad/tokenization_test.py: 23
-tensorflow==1.14
+tensorflow==2.11.1
 
 
 # machine_learning/qiaoying/run_squad/run_classifier_with_tfhub.py: 26
