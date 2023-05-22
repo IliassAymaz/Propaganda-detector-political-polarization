@@ -49,7 +49,7 @@ onlinetorch-website-url-finder == 0.1.2
 pandas
 
 # date_annotation/google_search.py: 3
-requests == 2.21.0
+requests == 2.31.0
 
 # machine_learning/qiaoying/run_squad/modeling.py: 27
 # machine_learning/qiaoying/run_squad/modeling_test.py: 25
